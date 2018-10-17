@@ -61,6 +61,21 @@ func (h *Handlers) AddAuthenticationService(
 	}
 }
 
+// AddFullGraphqlService Add all service available
+func (h *Handlers) AddFullGraphqlService(
+	schema string,
+	resolver interface{},
+	logger log.Logger,
+	namespace, moduleName, secret string,
+	method *jwt.SigningMethodHMAC,
+	claims jwt.Claims,
+) {
+	h.AddGraphqlService(schema, resolver)
+	h.AddLoggingService(logger)
+	h.AddInstrumentingService(namespace, moduleName)
+	h.AddAuthenticationService(secret, method, claims)
+}
+
 // Handler Retorns the http handler with all services added
 func (h *Handlers) Handler() http.Handler {
 	h.addLogging()
