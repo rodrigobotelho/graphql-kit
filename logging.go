@@ -2,6 +2,7 @@ package graphqlkit
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -26,11 +27,13 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 		if len(res.Errors) > 0 {
 			err = fmt.Errorf("request error: %v", res.Errors)
 		}
+		responseJSON, err := json.Marshal(res)
 		s.logger.Log(
 			"method", req.OperationName,
 			"query", req.Query,
 			"took", time.Since(begin),
 			"error", err,
+			"response", responseJSON,
 		)
 	}(time.Now())
 	res = s.Service.Exec(ctx, req)
