@@ -19,6 +19,7 @@ h.AddAuthenticationService(secret, method, claims)
 http.Handle("/graphql", h.Handler())
 ```
 ### Another option ###
+```
 h := graphql-kit.Handlers{}
 h.AddFullGraphqlService(
   schema, resolver,
