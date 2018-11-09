@@ -2,10 +2,8 @@ package graphqlkit
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 
-	"github.com/go-kit/kit/auth/jwt"
 	graphql "github.com/graph-gophers/graphql-go"
 )
 
@@ -26,9 +24,6 @@ func NewService(schema string, resolver interface{}) Service {
 }
 
 func (s *graphqlService) Exec(ctx context.Context, req GraphqlRequest) *graphql.Response {
-
-	claims := ctx.Value(jwt.JWTClaimsContextKey)
-	fmt.Println(claims)
 	return s.schema.Exec(ctx, req.Query, req.OperationName, req.Variables)
 }
 

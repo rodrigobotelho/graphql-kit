@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -15,9 +14,9 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-var userID = 1
-var secret = []byte("#yuui123")
-var expired = false
+var UserID = 1
+var Secret = []byte("#yuui123")
+var Expired = false
 
 //CreateTempFile Create a temp file with the data indicated
 func CreateTempFile(data string) (*os.File, func(), error) {
@@ -34,7 +33,7 @@ func CreateTempFile(data string) (*os.File, func(), error) {
 
 //CreateGraphqlRequest Create a Graphql request
 func CreateGraphqlRequest(request string) (*http.Request, error) {
-	body := fmt.Sprintf("{\"query\":\"{ %s }\"}", request)
+	body := fmt.Sprintf("{\"query\": %s }", request)
 	req, err := http.NewRequest("POST", "/graphql", strings.NewReader(body))
 
 	if err != nil {
@@ -69,7 +68,7 @@ func createJWTToken() string {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	var token *jwt.Token
-	if expired {
+	if Expired {
 		claims := customClaims{
 			"abc",
 			jwt.StandardClaims{
@@ -79,16 +78,16 @@ func createJWTToken() string {
 		}
 
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	} else if userID != 0 {
+	} else if UserID != 0 {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-			"user": userID,
+			"user": UserID,
 		})
 	} else {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{})
 	}
 
 	// Sign and get the complete encoded token as a string using the secret
-	tokenString, _ := token.SignedString(secret)
+	tokenString, _ := token.SignedString(Secret)
 	return tokenString
 }
 
@@ -105,8 +104,8 @@ func CheckResponseUnauthorized(resp *httptest.ResponseRecorder, t *testing.T, er
 		t.Errorf("Deveria ter retornado Unauthorized e retornou %v:%s\n", resp.Code, resp.Body.String())
 	}
 
-	expected := fmt.Sprintf("{\"err\":\"%s\"}", err)
-	if reflect.DeepEqual(resp.Body.String(), expected) {
+	expected := fmt.Sprintf("{\"err\":\"%s\"}\n", err)
+	if strings.Compare(resp.Body.String(), expected) != 0 {
 		t.Errorf("O erro deveria ter sido %s e foi %s", expected, resp.Body.String())
 	}
 }

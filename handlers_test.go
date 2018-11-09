@@ -60,7 +60,7 @@ func makeAnyService() (req *http.Request, resp *httptest.ResponseRecorder) {
 	defer remove()
 	var graphqlHander Handlers
 	graphqlHander.AddGraphqlService(file.Name(), &queryResolver)
-	query := fmt.Sprintf("anyMethod(param: %v)", param)
+	query := fmt.Sprintf("\"{ anyMethod(param: %v) }\"", param)
 	if auth {
 		graphqlHander.AddAuthenticationService(secretServer,
 			jwt.SigningMethodHS512, &jwt.StandardClaims{})
@@ -90,11 +90,11 @@ func makeAnyService() (req *http.Request, resp *httptest.ResponseRecorder) {
 }
 
 func setup() {
-	userID = 1
-	expired = false
+	UserID = 1
+	Expired = false
 	auth = false
 	queryResolver = anyResolver{}
-	secretServer = string(secret)
+	secretServer = string(Secret)
 	logger = nil
 	hasInstrumenting = false
 }
@@ -144,7 +144,7 @@ func TestAnyMethodWithAuthentication_WithTokenExpired_ShouldReturnUnauthorized(t
 	queryResolver.Answer = make([]int, 0, 1)
 	queryResolver.Answer = append(queryResolver.Answer, 1)
 	auth = true
-	expired = true
+	Expired = true
 
 	//Act
 	_, resp := makeAnyService()
