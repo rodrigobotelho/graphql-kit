@@ -60,7 +60,7 @@ func makeAnyService() (req *http.Request, resp *httptest.ResponseRecorder) {
 	defer remove()
 	var graphqlHander Handlers
 	graphqlHander.AddGraphqlService(file.Name(), &queryResolver)
-	query := fmt.Sprintf("\"{ anyMethod(param: %v) }\"", param)
+	query := fmt.Sprintf("{ anyMethod(param: %v) }", param)
 	if auth {
 		graphqlHander.AddAuthenticationService(secretServer,
 			jwt.SigningMethodHS512, &jwt.StandardClaims{})
