@@ -33,7 +33,7 @@ func CreateTempFile(data string) (*os.File, func(), error) {
 
 //CreateGraphqlRequest Create a Graphql request
 func CreateGraphqlRequest(request string) (*http.Request, error) {
-	body := fmt.Sprintf("{\"query\": %s }", request)
+	body := fmt.Sprintf("{\"query\":\"%s\"}", request)
 	req, err := http.NewRequest("POST", "/graphql", strings.NewReader(body))
 
 	if err != nil {
