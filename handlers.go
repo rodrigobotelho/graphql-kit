@@ -29,7 +29,8 @@ type Handlers struct {
 	authentication
 	logger log.Logger
 	instrumenting
-	options []httptransport.ServerOption
+	options      []httptransport.ServerOption
+	logBlacklist []string
 }
 
 // AddGraphqlService Create a new Service graphql and add to handler
@@ -76,6 +77,11 @@ func (h *Handlers) AddFullGraphqlService(
 	h.AddAuthenticationService(secret, method, claims)
 }
 
+// AddLoggingBlacklist Add a method for not be logging
+func (h *Handlers) AddLoggingBlacklist(methods []string) {
+	h.logBlacklist = append(h.logBlacklist, methods...)
+}
+
 // Handler Retorns the http handler with all services added
 func (h *Handlers) Handler() http.Handler {
 	h.addLogging()
@@ -100,7 +106,7 @@ func (h *Handlers) addLogging() {
 		h.options = append(h.options,
 			httptransport.ServerErrorLogger(h.logger),
 		)
-		h.service = NewLoggingService(h.logger, h.service)
+		h.service = NewLoggingService(h.logger, h.service, h.logBlacklist)
 	}
 }
 
