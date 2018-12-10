@@ -33,7 +33,12 @@ func CreateTempFile(data string) (*os.File, func(), error) {
 
 //CreateGraphqlRequest Create a Graphql request
 func CreateGraphqlRequest(request string) (*http.Request, error) {
-	body := fmt.Sprintf("{\"query\":\"%s\"}", request)
+	var body string
+	if request[0] == '"' {
+		body = fmt.Sprintf("{\"query\":%s}", request)
+	} else {
+		body = fmt.Sprintf("{\"query\":\"%s\"}", request)
+	}
 	req, err := http.NewRequest("POST", "/graphql", strings.NewReader(body))
 
 	if err != nil {
@@ -94,7 +99,11 @@ func createJWTToken() string {
 // CheckResponseOk Check if the response is 200 Ok
 func CheckResponseOk(resp *httptest.ResponseRecorder, t *testing.T) {
 	if resp.Code != http.StatusOK {
-		t.Errorf("Deveria ter retornado 200 Ok e retornou %v\n", resp.Code)
+		t.Errorf(
+			"Deveria ter retornado 200 Ok e retornou %v - %s\n",
+			resp.Code,
+			resp.Body.String(),
+		)
 	}
 }
 
