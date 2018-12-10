@@ -80,7 +80,10 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 	}
 	var query string
 	if tst.mutation {
-		query = fmt.Sprintf("{ mutation: anyMethod2(param: %v) }", param)
+		query = fmt.Sprintf(
+			`"mutation AnyMethod2($param: [ID]!) {anyMethod2(param: $param) {} }", "variables": { "param": "%v" }`,
+			param,
+		)
 	} else {
 		query = fmt.Sprintf("{ anyMethod(param: %v) }", param)
 	}
@@ -250,6 +253,24 @@ func TestMutationAnyMethod2InBlacklist_WithLogger_ShouldNotLog(t *testing.T) {
 	}
 }
 
+func TestAnyMethodInBlacklist_WithLoggerButFails_ShouldLog(t *testing.T) {
+	//Arrange
+	tst := setup()
+	tst.auth = true
+	var buf bytes.Buffer
+	tst.logger = log.NewLogfmtLogger(&buf)
+	tst.addBlacklist = append(tst.addBlacklist, "anyMethod")
+	queryResolver.Err = fmt.Errorf("any error")
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+
+	if len(buf.String()) == 0 {
+		t.Error("When fails, it should have logged, but it didn't.\n")
+	}
+}
 func TestAnyMethodWithAuthenticationLoggingInstrumetation_CantPanic(t *testing.T) {
 	//Arrange
 	tst := setup()

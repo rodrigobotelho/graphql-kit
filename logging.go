@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 		if req.OperationName == "" {
 			req.OperationName = findOpName(req.Query)
 		}
-		if s.inBlacklist(req.OperationName) {
+		if err == nil && s.inBlacklist(req.OperationName) {
 			return
 		}
 		responseJSON, err := json.Marshal(res)
@@ -57,11 +58,13 @@ func (s *loggingService) inBlacklist(operation string) bool {
 }
 
 func findOpName(req string) string {
-	var op string
-	var other string
-	_, err := fmt.Fscanf(strings.NewReader(req), "{ mutation: %s %s", &op, &other)
-	if err != nil {
-		fmt.Fscanf(strings.NewReader(req), "{ %s %s", &op, &other)
+	findOpAfterBracesWithOrWithoutSpace := "{([\t\n\v\f\r ]?)([0-9A-Za-z_]+)"
+	r, _ := regexp.Compile(findOpAfterBracesWithOrWithoutSpace)
+	str := r.FindString(req)
+	foundWithSpace := strings.Split(str, " ")
+	if len(foundWithSpace) > 1 {
+		return foundWithSpace[1]
 	}
-	return strings.Split(op, "(")[0]
+	foundWithoutSpace := foundWithSpace[0]
+	return strings.Replace(foundWithoutSpace, "{", "", -1)
 }
