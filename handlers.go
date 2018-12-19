@@ -29,8 +29,9 @@ type Handlers struct {
 	authentication
 	logger log.Logger
 	instrumenting
-	options      []httptransport.ServerOption
-	logBlacklist []string
+	options       []httptransport.ServerOption
+	logBlacklist  []string
+	authBlacklist []string
 }
 
 // AddGraphqlService Create a new Service graphql and add to handler
@@ -80,6 +81,11 @@ func (h *Handlers) AddFullGraphqlService(
 // AddLoggingBlacklist Add a method for not be logging
 func (h *Handlers) AddLoggingBlacklist(methods []string) {
 	h.logBlacklist = append(h.logBlacklist, methods...)
+}
+
+// AddAuthBlacklist Add a method for not be logging
+func (h *Handlers) AddAuthBlacklist(methods []string) {
+	h.authBlacklist = append(h.authBlacklist, methods...)
 }
 
 // Handler Retorns the http handler with all services added
@@ -137,11 +143,14 @@ func (h *Handlers) getEndpointWithAuthentication() endpoint.Endpoint {
 	h.options = append(h.options,
 		httptransport.ServerErrorEncoder(authErrorEncoder),
 		httptransport.ServerBefore(gokitjwt.HTTPToContext()))
-	return gokitjwt.NewParser(
+	auth := JwtEndpoint{
 		func(token *jwt.Token) (interface{}, error) {
 			return h.key, nil
 		},
 		h.method,
 		h.claims,
-	)(makeGraphqlEndpoint(h.service))
+	}
+	end := makeGraphqlEndpoint(h.service)
+
+	return makeBlacklistMiddleware(auth.NewParser(end), h.authBlacklist)(end)
 }

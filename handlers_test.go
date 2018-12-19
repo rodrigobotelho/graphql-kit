@@ -33,7 +33,8 @@ type testOptions struct {
 	secretServer     string
 	logger           log.Logger
 	hasInstrumenting bool
-	addBlacklist     []string
+	addLogBlacklist  []string
+	addAuthBlacklist []string
 	mutation         bool
 }
 
@@ -75,8 +76,11 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 	defer remove()
 	var graphqlHander Handlers
 	graphqlHander.AddGraphqlService(file.Name(), &queryResolver)
-	if len(tst.addBlacklist) != 0 {
-		graphqlHander.AddLoggingBlacklist(tst.addBlacklist)
+	if len(tst.addLogBlacklist) != 0 {
+		graphqlHander.AddLoggingBlacklist(tst.addLogBlacklist)
+	}
+	if len(tst.addAuthBlacklist) != 0 {
+		graphqlHander.AddAuthBlacklist(tst.addAuthBlacklist)
 	}
 	var query string
 	if tst.mutation {
@@ -87,9 +91,11 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 	} else {
 		query = fmt.Sprintf("{ anyMethod(param: %v) }", param)
 	}
-	if tst.auth {
+	if tst.secretServer != "" {
 		graphqlHander.AddAuthenticationService(tst.secretServer,
 			jwt.SigningMethodHS512, &jwt.StandardClaims{})
+	}
+	if tst.auth {
 		req, err = CreateGraphqlRequestWithAuthentication(query)
 	} else {
 		req, err = CreateGraphqlRequest(query)
@@ -121,7 +127,7 @@ func setup() *testOptions {
 	queryResolver = anyResolver{}
 	return &testOptions{
 		auth:             false,
-		secretServer:     string(Secret),
+		secretServer:     "",
 		logger:           nil,
 		hasInstrumenting: false,
 		mutation:         false,
@@ -167,12 +173,79 @@ func TestAnyMethodWithoutAuthentication_callService_ShouldReturnAnAnswer(t *test
 	}
 }
 
+func TestAnyMethodWithAuthentication_WithoutTokenButInAuthBlacklist_ShouldReturnAnAwnser(t *testing.T) {
+	//Arrange
+	tst := setup()
+	queryResolver.Answer = make([]int, 0, 1)
+	queryResolver.Answer = append(queryResolver.Answer, 1)
+	tst.secretServer = string(Secret)
+	tst.auth = false
+	tst.addAuthBlacklist = append(tst.addAuthBlacklist, "anyMethod")
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+}
+
+func TestAnyMethodWithAuthentication_WithoutTokenButInAuthBlacklistWithCaseInsenstive_ShouldReturnAnAwnser(t *testing.T) {
+	//Arrange
+	tst := setup()
+	queryResolver.Answer = make([]int, 0, 1)
+	queryResolver.Answer = append(queryResolver.Answer, 1)
+	tst.secretServer = string(Secret)
+	tst.auth = false
+	nameInsensitive := "AnYmEtHoD"
+	tst.addAuthBlacklist = append(tst.addAuthBlacklist, nameInsensitive)
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+}
+
+func TestMutationAnyMethod2WithAuthentication_WithoutTokenButInAuthBlacklistWithCaseInsenstive_ShouldReturnAnAwnser(t *testing.T) {
+	//Arrange
+	tst := setup()
+	queryResolver.Answer = make([]int, 0, 1)
+	queryResolver.Answer = append(queryResolver.Answer, 1)
+	tst.secretServer = string(Secret)
+	tst.auth = false
+	nameInsensitive := "AnYmEtHoD2"
+	tst.addAuthBlacklist = append(tst.addAuthBlacklist, nameInsensitive)
+	tst.mutation = true
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+}
+
+func TestAnyMethodWithAuthentication_WithoutToken_ShouldReturnUnauthorized(t *testing.T) {
+	//Arrange
+	tst := setup()
+	queryResolver.Answer = make([]int, 0, 1)
+	queryResolver.Answer = append(queryResolver.Answer, 1)
+	tst.secretServer = string(Secret)
+	tst.auth = false
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseUnauthorized(resp, t, "token up for parsing was not passed through the context")
+}
+
 func TestAnyMethodWithAuthentication_WithTokenExpired_ShouldReturnUnauthorized(t *testing.T) {
 	//Arrange
 	tst := setup()
 	queryResolver.Answer = make([]int, 0, 1)
 	queryResolver.Answer = append(queryResolver.Answer, 1)
 	tst.auth = true
+	tst.secretServer = string(Secret)
 	Expired = true
 
 	//Act
@@ -188,6 +261,7 @@ func TestAnyMethodWithAuthentication_WithTokenInvalid_ShouldReturnUnauthorized(t
 	queryResolver.Answer = make([]int, 0, 1)
 	queryResolver.Answer = append(queryResolver.Answer, 1)
 	tst.auth = true
+	tst.secretServer = string(Secret)
 	tst.secretServer = "somethingelse"
 
 	//Act
@@ -201,6 +275,7 @@ func TestAnyMethodWithAuthenticationLogging_WithLogger_ShouldLog(t *testing.T) {
 	//Arrange
 	tst := setup()
 	tst.auth = true
+	tst.secretServer = string(Secret)
 	var buf bytes.Buffer
 	tst.logger = log.NewLogfmtLogger(&buf)
 
@@ -218,10 +293,9 @@ func TestAnyMethodWithAuthenticationLogging_WithLogger_ShouldLog(t *testing.T) {
 func TestAnyMethodInBlacklist_WithLogger_ShouldNotLog(t *testing.T) {
 	//Arrange
 	tst := setup()
-	tst.auth = true
 	var buf bytes.Buffer
 	tst.logger = log.NewLogfmtLogger(&buf)
-	tst.addBlacklist = append(tst.addBlacklist, "anyMethod")
+	tst.addLogBlacklist = append(tst.addLogBlacklist, "anyMethod")
 	//Act
 	_, resp := tst.makeAnyService()
 
@@ -236,10 +310,9 @@ func TestAnyMethodInBlacklist_WithLogger_ShouldNotLog(t *testing.T) {
 func TestMutationAnyMethod2InBlacklist_WithLogger_ShouldNotLog(t *testing.T) {
 	//Arrange
 	tst := setup()
-	tst.auth = true
 	var buf bytes.Buffer
 	tst.logger = log.NewLogfmtLogger(&buf)
-	tst.addBlacklist = append(tst.addBlacklist, "anyMethod2")
+	tst.addLogBlacklist = append(tst.addLogBlacklist, "anyMethod2")
 	tst.mutation = true
 
 	//Act
@@ -256,10 +329,9 @@ func TestMutationAnyMethod2InBlacklist_WithLogger_ShouldNotLog(t *testing.T) {
 func TestAnyMethodInBlacklist_WithLoggerButFails_ShouldLog(t *testing.T) {
 	//Arrange
 	tst := setup()
-	tst.auth = true
 	var buf bytes.Buffer
 	tst.logger = log.NewLogfmtLogger(&buf)
-	tst.addBlacklist = append(tst.addBlacklist, "anyMethod")
+	tst.addLogBlacklist = append(tst.addLogBlacklist, "anyMethod")
 	queryResolver.Err = fmt.Errorf("any error")
 	//Act
 	_, resp := tst.makeAnyService()
@@ -275,6 +347,7 @@ func TestAnyMethodWithAuthenticationLoggingInstrumetation_CantPanic(t *testing.T
 	//Arrange
 	tst := setup()
 	tst.auth = true
+	tst.secretServer = string(Secret)
 	var buf bytes.Buffer
 	tst.logger = log.NewLogfmtLogger(&buf)
 	tst.hasInstrumenting = true

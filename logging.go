@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -23,7 +22,7 @@ type loggingService struct {
 func NewLoggingService(logger log.Logger, s Service, blacklist []string) Service {
 	bl := make(map[string]bool)
 	for _, method := range blacklist {
-		bl[method] = true
+		bl[strings.ToUpper(method)] = true
 	}
 	return &loggingService{logger, s, bl}
 }
@@ -55,16 +54,4 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 
 func (s *loggingService) inBlacklist(operation string) bool {
 	return s.blacklist[operation]
-}
-
-func findOpName(req string) string {
-	findOpAfterBracesWithOrWithoutSpace := "{([\t\n\v\f\r ]?)([0-9A-Za-z_]+)"
-	r, _ := regexp.Compile(findOpAfterBracesWithOrWithoutSpace)
-	str := r.FindString(req)
-	foundWithSpace := strings.Split(str, " ")
-	if len(foundWithSpace) > 1 {
-		return foundWithSpace[1]
-	}
-	foundWithoutSpace := foundWithSpace[0]
-	return strings.Replace(foundWithoutSpace, "{", "", -1)
 }
