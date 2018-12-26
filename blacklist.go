@@ -28,9 +28,13 @@ func makeBlacklistMiddleware(end endpoint.Endpoint, blacklist []string) endpoint
 }
 
 func findOpName(req string) string {
-	findOpAfterBracesWithOrWithoutSpace := "{([\t\n\v\f\r ]?)([0-9A-Za-z_]+)"
-	r, _ := regexp.Compile(findOpAfterBracesWithOrWithoutSpace)
-	str := r.FindString(req)
+	findOpAfterBracesWithOrWithoutSpace := "{([\t\n\v\f\r ]*)([0-9A-Za-z_]+)"
+	r := regexp.MustCompile(findOpAfterBracesWithOrWithoutSpace)
+	sm := r.FindStringSubmatch(req)
+	str := ""
+	if len(sm) > 0 {
+		str = sm[len(sm)-1]
+	}
 	foundWithSpace := strings.Split(str, " ")
 	if len(foundWithSpace) > 1 {
 		return strings.ToUpper(foundWithSpace[1])
