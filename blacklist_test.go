@@ -14,7 +14,7 @@ func Test_findOpName(t *testing.T) {
 		{
 			"More than one space after bracket",
 			args{"{  qn }"},
-			"QN",
+			"qn",
 		},
 	}
 	for _, tt := range tests {

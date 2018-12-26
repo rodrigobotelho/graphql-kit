@@ -36,7 +36,7 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 		if req.OperationName == "" {
 			req.OperationName = findOpName(req.Query)
 		}
-		if err == nil && s.inBlacklist(req.OperationName) {
+		if err == nil && s.inBlacklist(strings.ToUpper(req.OperationName)) {
 			return
 		}
 		responseJSON, err := json.Marshal(res)

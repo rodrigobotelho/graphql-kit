@@ -19,7 +19,7 @@ func makeBlacklistMiddleware(end endpoint.Endpoint, blacklist []string) endpoint
 			if req.OperationName == "" {
 				req.OperationName = findOpName(req.Query)
 			}
-			if bl[req.OperationName] {
+			if bl[strings.ToUpper(req.OperationName)] {
 				return next(ctx, request)
 			}
 			return end(ctx, request)
@@ -37,8 +37,8 @@ func findOpName(req string) string {
 	}
 	foundWithSpace := strings.Split(str, " ")
 	if len(foundWithSpace) > 1 {
-		return strings.ToUpper(foundWithSpace[1])
+		return foundWithSpace[1]
 	}
 	foundWithoutSpace := foundWithSpace[0]
-	return strings.ToUpper(strings.Replace(foundWithoutSpace, "{", "", -1))
+	return strings.Replace(foundWithoutSpace, "{", "", -1)
 }
