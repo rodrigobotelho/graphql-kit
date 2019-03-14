@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -84,8 +85,8 @@ func createJWTToken() string {
 
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	} else if UserID != 0 {
-		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-			"user": UserID,
+		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
+			Subject: strconv.Itoa(UserID),
 		})
 	} else {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{})
