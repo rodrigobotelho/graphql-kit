@@ -32,6 +32,6 @@ func getGraphqlSchema(schema string, res interface{}) *graphql.Schema {
 	if err != nil {
 		panic(err)
 	}
-	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers()}
+	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers(), graphql.UseStringDescriptions()}
 	return graphql.MustParseSchema(string(schemaFile), res, opts...)
 }
