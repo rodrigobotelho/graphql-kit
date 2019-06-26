@@ -45,7 +45,7 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 			"query", req.Query,
 			"took", time.Since(begin),
 			"error", err,
-			"response", responseJSON,
+			"response", string(responseJSON),
 		)
 	}(time.Now())
 	res = s.Service.Exec(ctx, req)
