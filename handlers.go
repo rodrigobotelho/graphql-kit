@@ -88,6 +88,11 @@ func (h *Handlers) AddAuthBlacklist(methods []string) {
 	h.authBlacklist = append(h.authBlacklist, methods...)
 }
 
+// AddServerOptions Add server options to handler
+func (h *Handlers) AddServerOptions(options ...httptransport.ServerOption) {
+	h.options = append(h.options, options...)
+}
+
 // Handler Retorns the http handler with all services added
 func (h *Handlers) Handler() http.Handler {
 	h.addLogging()
