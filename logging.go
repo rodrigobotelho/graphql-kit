@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
+	gokitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/log"
 	graphql "github.com/graph-gophers/graphql-go"
 )
@@ -40,7 +42,15 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 			return
 		}
 		responseJSON, err := json.Marshal(res)
+		standardCl, converted := ctx.Value(gokitjwt.JWTClaimsContextKey).(*jwt.StandardClaims)
+		var subject string
+		if !converted {
+			subject = "Not Authenticated"
+		} else {
+			subject = standardCl.Subject
+		}
 		s.logger.Log(
+			"user", subject,
 			"method", req.OperationName,
 			"query", req.Query,
 			"took", time.Since(begin),
