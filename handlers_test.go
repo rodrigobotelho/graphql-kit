@@ -11,6 +11,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	fields "github.com/gbaptista/requested-fields"
 	"github.com/go-kit/kit/log"
 	graphql "github.com/graph-gophers/graphql-go"
 )
@@ -42,6 +43,7 @@ type anyResolver struct {
 	Answer    []int
 	ManyCalls int
 	Err       error
+	Field     fields.Field `graphql:"Query"`
 }
 
 func (qR *anyResolver) AnyMethod(ctx context.Context, args struct{ Param []*graphql.ID }) (*[]*graphql.ID, error) {
@@ -49,6 +51,8 @@ func (qR *anyResolver) AnyMethod(ctx context.Context, args struct{ Param []*grap
 	if qR.Err != nil {
 		return nil, qR.Err
 	}
+	fmt.Printf(
+		"Query.User Fields: %v", fields.RequestedFor(ctx, qR))
 	retorno := transformIntToGraphQlID(qR.Answer)
 	return &retorno, nil
 }

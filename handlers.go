@@ -1,9 +1,15 @@
 package graphqlkit
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	fields "github.com/gbaptista/requested-fields"
 	gokitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -103,6 +109,7 @@ func (h *Handlers) Handler() http.Handler {
 	} else {
 		httpEndpoint = makeGraphqlEndpoint(h.service)
 	}
+	h.AddServerOptions(httptransport.ServerBefore(fieldsToCtx()))
 
 	return httptransport.NewServer(
 		httpEndpoint,
@@ -110,6 +117,21 @@ func (h *Handlers) Handler() http.Handler {
 		encodeResponse,
 		h.options...,
 	)
+}
+
+func fieldsToCtx() httptransport.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		var params GraphqlRequest
+		bodyBytes, _ := ioutil.ReadAll(r.Body)
+		if err := json.Unmarshal(bodyBytes, &params); err != nil {
+			fmt.Print(err)
+			return nil
+		}
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		return context.WithValue(r.Context(),
+			fields.ContextKey, fields.BuildTree(params.Query, params.Variables))
+	}
 }
 
 func (h *Handlers) addLogging() {
