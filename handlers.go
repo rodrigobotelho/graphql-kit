@@ -129,7 +129,7 @@ func fieldsToCtx() httptransport.RequestFunc {
 		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		return context.WithValue(r.Context(),
+		return context.WithValue(ctx,
 			fields.ContextKey, fields.BuildTree(params.Query, params.Variables))
 	}
 }
