@@ -60,13 +60,11 @@ func (h *Handlers) AddInstrumentingService(namespace, moduleName string) {
 func (h *Handlers) AddAuthenticationService(
 	secret string,
 	method *jwt.SigningMethodHMAC,
-	claims jwt.Claims) {
+	claimsFactory gokitjwt.ClaimsFactory) {
 
 	h.key = []byte(secret)
 	h.method = method
-	h.claims = func() jwt.Claims {
-		return claims
-	}
+	h.claims = claimsFactory
 }
 
 // AddFullGraphqlService Add all service available
@@ -76,12 +74,12 @@ func (h *Handlers) AddFullGraphqlService(
 	logger log.Logger,
 	namespace, moduleName, secret string,
 	method *jwt.SigningMethodHMAC,
-	claims jwt.Claims,
+	claimsFactory gokitjwt.ClaimsFactory,
 ) {
 	h.AddGraphqlService(schema, resolver)
 	h.AddLoggingService(logger)
 	h.AddInstrumentingService(namespace, moduleName)
-	h.AddAuthenticationService(secret, method, claims)
+	h.AddAuthenticationService(secret, method, claimsFactory)
 }
 
 // AddLoggingBlacklist Add a method for not be logging

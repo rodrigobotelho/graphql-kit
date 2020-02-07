@@ -97,7 +97,7 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 	}
 	if tst.secretServer != "" {
 		graphqlHander.AddAuthenticationService(tst.secretServer,
-			jwt.SigningMethodHS512, &jwt.StandardClaims{})
+			jwt.SigningMethodHS512, func() jwt.Claims { return &customClaims{} })
 	}
 	if tst.auth {
 		req, err = CreateGraphqlRequestWithAuthentication(query)
