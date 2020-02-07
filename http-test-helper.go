@@ -19,6 +19,8 @@ var UserID = 1
 var Secret = []byte("#yuui123")
 var Expired = false
 
+var UsingCustom bool
+
 //CreateTempFile Create a temp file with the data indicated
 func CreateTempFile(data string) (*os.File, func(), error) {
 	file, err := ioutil.TempFile("./", "temp")
@@ -85,9 +87,19 @@ func createJWTToken() string {
 
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	} else if UserID != 0 {
-		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.StandardClaims{
+		var claim jwt.Claims
+		standard := jwt.StandardClaims{
 			Subject: strconv.Itoa(UserID),
-		})
+		}
+		if UsingCustom {
+			claim = customClaims{
+				"abc",
+				standard,
+			}
+		} else {
+			claim = standard
+		}
+		token = jwt.NewWithClaims(jwt.SigningMethodHS512, claim)
 	} else {
 		token = jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{})
 	}

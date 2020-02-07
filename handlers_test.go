@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -289,8 +290,30 @@ func TestAnyMethodWithAuthenticationLogging_WithLogger_ShouldLog(t *testing.T) {
 	//Assert
 	CheckResponseOk(resp, t)
 
+	fmt.Printf(buf.String())
 	if len(buf.String()) == 0 {
 		t.Error("Should have logged, but it didn't.\n")
+	}
+}
+
+func TestAnyMethodWithAuthenticationLogging_WithDifferentClaim_ShouldLogTheUser(t *testing.T) {
+	//Arrange
+	tst := setup()
+	tst.auth = true
+	tst.secretServer = string(Secret)
+	var buf bytes.Buffer
+	tst.logger = log.NewLogfmtLogger(&buf)
+	UsingCustom = true
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+
+	fmt.Printf(buf.String())
+	if !strings.Contains(buf.String(), "user=1") {
+		t.Error("Should have logged the user, but it didn't.\n")
 	}
 }
 
