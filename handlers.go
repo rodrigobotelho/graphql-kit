@@ -18,6 +18,13 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
+type contextKey string
+
+const (
+	SchemaKey  contextKey = "schema"
+	RequestKey contextKey = "request"
+)
+
 type authentication struct {
 	key    []byte
 	method *jwt.SigningMethodHMAC
@@ -38,11 +45,12 @@ type Handlers struct {
 	options       []httptransport.ServerOption
 	logBlacklist  []string
 	authBlacklist []string
+	schemaString  string
 }
 
 // AddGraphqlService Create a new Service graphql and add to handler
 func (h *Handlers) AddGraphqlService(schema string, resolver interface{}) {
-	h.service = NewService(schema, resolver)
+	h.service, h.schemaString = NewService(schema, resolver)
 }
 
 // AddLoggingService Add logging Service to handler
@@ -108,6 +116,8 @@ func (h *Handlers) Handler() http.Handler {
 		httpEndpoint = makeGraphqlEndpoint(h.service)
 	}
 	h.AddServerOptions(httptransport.ServerBefore(fieldsToCtx()))
+	h.AddServerOptions(httptransport.ServerBefore(schemaToCtx(h.schemaString)))
+	h.AddServerOptions(httptransport.ServerBefore(requestToCtx()))
 
 	return httptransport.NewServer(
 		httpEndpoint,
@@ -129,6 +139,20 @@ func fieldsToCtx() httptransport.RequestFunc {
 
 		return context.WithValue(ctx,
 			fields.ContextKey, fields.BuildTree(params.Query, params.Variables))
+	}
+}
+
+func requestToCtx() httptransport.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		bodyBytes, _ := ioutil.ReadAll(r.Body)
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+		return context.WithValue(ctx, RequestKey, bodyBytes)
+	}
+}
+
+func schemaToCtx(schemaString string) httptransport.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		return context.WithValue(ctx, SchemaKey, schemaString)
 	}
 }
 

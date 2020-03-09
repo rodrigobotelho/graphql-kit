@@ -17,21 +17,21 @@ type graphqlService struct {
 }
 
 // NewService Create a new graphql service, reading and resolving schema
-func NewService(schema string, resolver interface{}) Service {
-	return &graphqlService{
-		schema: getGraphqlSchema(schema, resolver),
-	}
+func NewService(schemaFilename string, resolver interface{}) (Service, string) {
+	schema, schemaString := getGraphqlSchema(schemaFilename, resolver)
+	return &graphqlService{schema}, schemaString
 }
 
 func (s *graphqlService) Exec(ctx context.Context, req GraphqlRequest) *graphql.Response {
 	return s.schema.Exec(ctx, req.Query, req.OperationName, req.Variables)
 }
 
-func getGraphqlSchema(schema string, res interface{}) *graphql.Schema {
-	schemaFile, err := ioutil.ReadFile(schema)
+func getGraphqlSchema(schemaFilename string, res interface{}) (*graphql.Schema, string) {
+	schemaBytes, err := ioutil.ReadFile(schemaFilename)
 	if err != nil {
 		panic(err)
 	}
 	opts := []graphql.SchemaOpt{graphql.UseFieldResolvers(), graphql.UseStringDescriptions()}
-	return graphql.MustParseSchema(string(schemaFile), res, opts...)
+	schemaString := string(schemaBytes)
+	return graphql.MustParseSchema(schemaString, res, opts...), schemaString
 }
