@@ -192,14 +192,7 @@ func (h *Handlers) getEndpointWithAuthentication() endpoint.Endpoint {
 	h.options = append(h.options,
 		httptransport.ServerErrorEncoder(authErrorEncoder),
 		httptransport.ServerBefore(gokitjwt.HTTPToContext()))
-	auth := JwtEndpoint{
-		func(token *jwt.Token) (interface{}, error) {
-			return h.key, nil
-		},
-		h.method,
-		h.claims,
-	}
 	end := makeGraphqlEndpoint(h.service)
 
-	return makeBlacklistMiddleware(auth.NewParser(end), h.authBlacklist)(end)
+	return makeBlacklistMiddleware(MakeAuthenticationEndPoint(end, h.key, h.method, h.claims), h.authBlacklist)(end)
 }

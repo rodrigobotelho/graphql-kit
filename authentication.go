@@ -8,6 +8,22 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
+func MakeAuthenticationEndPoint(
+	end endpoint.Endpoint,
+	secret []byte,
+	method jwt.SigningMethod,
+	newClaims kitjwt.ClaimsFactory,
+) endpoint.Endpoint {
+	auth := JwtEndpoint{
+		keyFunc: func(token *jwt.Token) (interface{}, error) {
+			return secret, nil
+		},
+		method:    method,
+		newClaims: newClaims,
+	}
+	return auth.NewParser(end)
+}
+
 // JwtEndpoint Struct with all parameters for NewParser from jwt
 type JwtEndpoint struct {
 	keyFunc   jwt.Keyfunc
