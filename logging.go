@@ -31,17 +31,24 @@ func NewLoggingService(logger log.Logger, s Service, blacklist []string) Service
 
 func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *graphql.Response) {
 	defer func(begin time.Time) {
-		var err error
+		var responseErr error
 		if len(res.Errors) > 0 {
-			err = fmt.Errorf("request error: %v", res.Errors)
+			responseErr = fmt.Errorf("request error: %v", res.Errors)
 		}
 		if req.OperationName == "" {
 			req.OperationName = findOpName(req.Query)
 		}
-		if err == nil && s.inBlacklist(strings.ToUpper(req.OperationName)) {
+		if responseErr == nil && s.inBlacklist(strings.ToUpper(req.OperationName)) {
 			return
 		}
+		variablesJSON, err := json.Marshal(req.Variables)
+		if err != nil {
+			variablesJSON = []byte("error marshaling variables to json: " + err.Error())
+		}
 		responseJSON, err := json.Marshal(res)
+		if err != nil {
+			responseJSON = []byte("error marshaling response to json: " + err.Error())
+		}
 		claimsValue := reflect.ValueOf(ctx.Value(gokitjwt.JWTClaimsContextKey))
 		fmt.Printf(claimsValue.Kind().String())
 		subject := "Not Authenticated"
@@ -55,8 +62,9 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 			"user", subject,
 			"method", req.OperationName,
 			"query", req.Query,
+			"variables", string(variablesJSON),
 			"took", time.Since(begin),
-			"error", err,
+			"error", responseErr,
 			"response", string(responseJSON),
 		)
 	}(time.Now())
