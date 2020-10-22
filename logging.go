@@ -62,7 +62,9 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 		}
 		if req.Variables != nil && s.variablesblacklist != nil {
 			for _, variable := range s.variablesblacklist[strings.ToUpper(req.OperationName)] {
-				req.Variables[variable] = "(omitted)"
+				if _, ok := req.Variables[variable]; ok {
+					req.Variables[variable] = "(omitted)"
+				}
 			}
 		}
 		variablesJSON, err := json.Marshal(req.Variables)
