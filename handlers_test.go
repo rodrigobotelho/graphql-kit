@@ -31,13 +31,15 @@ type Mutation {
 }`
 
 type testOptions struct {
-	auth             bool
-	secretServer     string
-	logger           log.Logger
-	hasInstrumenting bool
-	addLogBlacklist  []string
-	addAuthBlacklist []string
-	mutation         bool
+	auth                     bool
+	secretServer             string
+	logger                   log.Logger
+	hasInstrumenting         bool
+	addLogBlacklist          []string
+	addLogFullBlacklist      []string
+	addLogVariablesBlacklist map[string][]string
+	addAuthBlacklist         []string
+	mutation                 bool
 }
 
 type anyResolver struct {
@@ -83,6 +85,12 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 	graphqlHander.AddGraphqlService(file.Name(), &queryResolver)
 	if len(tst.addLogBlacklist) != 0 {
 		graphqlHander.AddLoggingBlacklist(tst.addLogBlacklist)
+	}
+	if len(tst.addLogFullBlacklist) != 0 {
+		graphqlHander.AddLoggingFullBlacklist(tst.addLogFullBlacklist)
+	}
+	if tst.addLogVariablesBlacklist != nil {
+		graphqlHander.AddLoggingVariablesBlacklist(tst.addLogVariablesBlacklist)
 	}
 	if len(tst.addAuthBlacklist) != 0 {
 		graphqlHander.AddAuthBlacklist(tst.addAuthBlacklist)
@@ -368,6 +376,44 @@ func TestAnyMethodInBlacklist_WithLoggerButFails_ShouldLog(t *testing.T) {
 
 	if len(buf.String()) == 0 {
 		t.Error("When fails, it should have logged, but it didn't.\n")
+	}
+}
+
+func TestAnyMethodInFullBlacklist_WithLoggerButFails_ShouldNotLog(t *testing.T) {
+	//Arrange
+	tst := setup()
+	var buf bytes.Buffer
+	tst.logger = log.NewLogfmtLogger(&buf)
+	tst.addLogFullBlacklist = append(tst.addLogFullBlacklist, "anyMethod")
+	queryResolver.Err = fmt.Errorf("any error")
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+
+	if len(buf.String()) != 0 {
+		t.Error("When fails, it should not have logged, but it did.\n")
+	}
+}
+
+func TestAnyMethod2InVariablesBlacklist_WithLogger_ShouldNotLogThoseVariables(t *testing.T) {
+	//Arrange
+	tst := setup()
+	var buf bytes.Buffer
+	tst.logger = log.NewLogfmtLogger(&buf)
+	tst.addLogVariablesBlacklist = make(map[string][]string)
+	tst.addLogVariablesBlacklist["anyMethod2"] = []string{"param"}
+	tst.mutation = true
+
+	//Act
+	_, resp := tst.makeAnyService()
+
+	//Assert
+	CheckResponseOk(resp, t)
+
+	if !strings.Contains(buf.String(), `\"param\":\"(omitted)\"`) {
+		t.Errorf("Should have omitted the param, but it didn't.\n %v", buf.String())
 	}
 }
 func TestAnyMethodWithAuthenticationLoggingInstrumetation_CantPanic(t *testing.T) {

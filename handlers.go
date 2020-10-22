@@ -42,10 +42,12 @@ type Handlers struct {
 	authentication
 	logger log.Logger
 	instrumenting
-	options       []httptransport.ServerOption
-	logBlacklist  []string
-	authBlacklist []string
-	schemaString  string
+	options               []httptransport.ServerOption
+	logBlacklist          []string
+	logFullBlacklist      []string
+	logVariablesBlacklist map[string][]string
+	authBlacklist         []string
+	schemaString          string
 }
 
 // AddGraphqlService Create a new Service graphql and add to handler
@@ -93,6 +95,21 @@ func (h *Handlers) AddFullGraphqlService(
 // AddLoggingBlacklist Add a method for not be logging
 func (h *Handlers) AddLoggingBlacklist(methods []string) {
 	h.logBlacklist = append(h.logBlacklist, methods...)
+}
+
+// AddLoggingFullBlacklist Add a method for not be logging anyway with or without erros
+func (h *Handlers) AddLoggingFullBlacklist(methods []string) {
+	h.logFullBlacklist = append(h.logFullBlacklist, methods...)
+}
+
+// AddLoggingVariablesBlacklist Add a variables list of a method for not be logging
+func (h *Handlers) AddLoggingVariablesBlacklist(methodsvariables map[string][]string) {
+	if h.logVariablesBlacklist == nil {
+		h.logVariablesBlacklist = make(map[string][]string)
+	}
+	for method, variables := range methodsvariables {
+		h.logVariablesBlacklist[method] = append(h.logVariablesBlacklist[method], variables...)
+	}
 }
 
 // AddAuthBlacklist Add a method for not be logging
@@ -161,7 +178,7 @@ func (h *Handlers) addLogging() {
 		h.options = append(h.options,
 			httptransport.ServerErrorLogger(h.logger),
 		)
-		h.service = NewLoggingService(h.logger, h.service, h.logBlacklist)
+		h.service = NewLoggingService(h.logger, h.service, h.logBlacklist, h.logFullBlacklist, h.logVariablesBlacklist)
 	}
 }
 
