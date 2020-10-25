@@ -135,6 +135,7 @@ func (h *Handlers) Handler() http.Handler {
 	h.AddServerOptions(httptransport.ServerBefore(fieldsToCtx()))
 	h.AddServerOptions(httptransport.ServerBefore(schemaToCtx(h.schemaString)))
 	h.AddServerOptions(httptransport.ServerBefore(requestToCtx()))
+	h.AddServerOptions(httptransport.ServerBefore(httptransport.PopulateRequestContext))
 
 	return httptransport.NewServer(
 		httpEndpoint,
