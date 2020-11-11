@@ -151,7 +151,7 @@ func fieldsToCtx() httptransport.RequestFunc {
 		bodyBytes, _ := ioutil.ReadAll(r.Body)
 		if err := json.Unmarshal(bodyBytes, &params); err != nil {
 			fmt.Print(err)
-			return nil
+			return ctx
 		}
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
