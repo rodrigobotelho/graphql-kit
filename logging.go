@@ -10,6 +10,7 @@ import (
 
 	gokitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/log"
+	httptransport "github.com/go-kit/kit/transport/http"
 	graphql "github.com/graph-gophers/graphql-go"
 )
 
@@ -84,7 +85,9 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 				subject = subjectValue.String()
 			}
 		}
+		reqID, _ := ctx.Value(httptransport.ContextKeyRequestXRequestID).(string)
 		s.logger.Log(
+			"x-req-id", reqID,
 			"user", subject,
 			"method", req.OperationName,
 			"query", req.Query,
