@@ -15,6 +15,7 @@ import (
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/google/uuid"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -136,6 +137,7 @@ func (h *Handlers) Handler() http.Handler {
 	h.AddServerOptions(httptransport.ServerBefore(schemaToCtx(h.schemaString)))
 	h.AddServerOptions(httptransport.ServerBefore(requestToCtx()))
 	h.AddServerOptions(httptransport.ServerBefore(httptransport.PopulateRequestContext))
+	h.AddServerOptions(httptransport.ServerBefore(requestIdToCtx()))
 
 	return httptransport.NewServer(
 		httpEndpoint,
@@ -171,6 +173,22 @@ func requestToCtx() httptransport.RequestFunc {
 func schemaToCtx(schemaString string) httptransport.RequestFunc {
 	return func(ctx context.Context, r *http.Request) context.Context {
 		return context.WithValue(ctx, SchemaKey, schemaString)
+	}
+}
+
+func requestIdToCtx() httptransport.RequestFunc {
+	return func(ctx context.Context, r *http.Request) context.Context {
+		reqId, ok := ctx.Value(httptransport.ContextKeyRequestXRequestID).(string)
+		if !ok || reqId == "" {
+			if reqId := r.Header.Get("X-Request-Id"); reqId != "" {
+				return context.WithValue(ctx, httptransport.ContextKeyRequestXRequestID, reqId)
+			}
+			reqId, err := uuid.NewRandom()
+			if err == nil {
+				return context.WithValue(ctx, httptransport.ContextKeyRequestXRequestID, reqId.String())
+			}
+		}
+		return ctx
 	}
 }
 

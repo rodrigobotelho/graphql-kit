@@ -265,7 +265,7 @@ func TestAnyMethodWithAuthentication_WithTokenExpired_ShouldReturnUnauthorized(t
 	_, resp := tst.makeAnyService()
 
 	//Assert
-	CheckResponseUnauthorized(resp, t, "JWT Token is expired")
+	CheckResponseUnauthorized(resp, t, "JWT is expired")
 }
 
 func TestAnyMethodWithAuthentication_WithTokenInvalid_ShouldReturnUnauthorized(t *testing.T) {
