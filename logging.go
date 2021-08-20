@@ -10,6 +10,7 @@ import (
 
 	gokitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/log"
+	httptransport "github.com/go-kit/kit/transport/http"
 	graphql "github.com/graph-gophers/graphql-go"
 )
 
@@ -76,7 +77,6 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 			responseJSON = []byte("error marshaling response to json: " + err.Error())
 		}
 		claimsValue := reflect.ValueOf(ctx.Value(gokitjwt.JWTClaimsContextKey))
-		fmt.Printf(claimsValue.Kind().String())
 		subject := "Not Authenticated"
 		if claimsValue.IsValid() {
 			subjectValue := claimsValue.Elem().FieldByName("Subject")
@@ -84,7 +84,9 @@ func (s *loggingService) Exec(ctx context.Context, req GraphqlRequest) (res *gra
 				subject = subjectValue.String()
 			}
 		}
+		reqID, _ := ctx.Value(httptransport.ContextKeyRequestXRequestID).(string)
 		s.logger.Log(
+			"x-req-id", reqID,
 			"user", subject,
 			"method", req.OperationName,
 			"query", req.Query,
