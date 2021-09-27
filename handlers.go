@@ -8,13 +8,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	fields "github.com/gbaptista/requested-fields"
 	gokitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	httptransport "github.com/go-kit/kit/transport/http"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
