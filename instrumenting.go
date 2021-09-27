@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	gokitjwt "github.com/go-kit/kit/auth/jwt"
+	jwt "github.com/golang-jwt/jwt/v4"
 
 	"github.com/go-kit/kit/metrics"
 

@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	fields "github.com/gbaptista/requested-fields"
 	"github.com/go-kit/kit/log"
+	jwt "github.com/golang-jwt/jwt/v4"
 	graphql "github.com/graph-gophers/graphql-go"
 )
 

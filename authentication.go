@@ -3,9 +3,9 @@ package graphqlkit
 import (
 	"context"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	kitjwt "github.com/go-kit/kit/auth/jwt"
 	"github.com/go-kit/kit/endpoint"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 func MakeAuthenticationEndPoint(
