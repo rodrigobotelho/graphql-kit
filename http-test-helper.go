@@ -16,12 +16,13 @@ import (
 )
 
 var UserID = 1
+var Audience = ""
 var Secret = []byte("#yuui123")
 var Expired = false
 
 var UsingCustom bool
 
-//CreateTempFile Create a temp file with the data indicated
+// CreateTempFile Create a temp file with the data indicated
 func CreateTempFile(data string) (*os.File, func(), error) {
 	file, err := ioutil.TempFile("./", "temp")
 	if err != nil {
@@ -34,7 +35,7 @@ func CreateTempFile(data string) (*os.File, func(), error) {
 	}, err
 }
 
-//CreateGraphqlRequest Create a Graphql request
+// CreateGraphqlRequest Create a Graphql request
 func CreateGraphqlRequest(request string) (*http.Request, error) {
 	var body string
 	if request[0] == '"' {
@@ -53,7 +54,7 @@ func CreateGraphqlRequest(request string) (*http.Request, error) {
 	return req, nil
 }
 
-//CreateGraphqlRequestWithAuthentication Create a Graphql request with authentication token
+// CreateGraphqlRequestWithAuthentication Create a Graphql request with authentication token
 func CreateGraphqlRequestWithAuthentication(request string) (*http.Request, error) {
 	req, err := CreateGraphqlRequest(request)
 
@@ -90,6 +91,9 @@ func createJWTToken() string {
 		var claim jwt.Claims
 		standard := jwt.StandardClaims{
 			Subject: strconv.Itoa(UserID),
+		}
+		if Audience != "" {
+			standard.Audience = Audience
 		}
 		if UsingCustom {
 			claim = customClaims{

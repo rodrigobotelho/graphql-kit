@@ -137,6 +137,7 @@ func (tst *testOptions) makeAnyService() (req *http.Request, resp *httptest.Resp
 func setup() *testOptions {
 	UserID = 1
 	Expired = false
+	Audience = "aud123"
 	queryResolver = anyResolver{}
 	return &testOptions{
 		auth:             false,
