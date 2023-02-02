@@ -28,7 +28,7 @@ const (
 
 type authentication struct {
 	key    []byte
-	method *jwt.SigningMethodHMAC
+	method jwt.SigningMethod
 	claims gokitjwt.ClaimsFactory
 }
 
@@ -70,7 +70,7 @@ func (h *Handlers) AddInstrumentingService(namespace, moduleName string) {
 // AddAuthenticationService Add Authentication Service to handler
 func (h *Handlers) AddAuthenticationService(
 	secret string,
-	method *jwt.SigningMethodHMAC,
+	method jwt.SigningMethod,
 	claimsFactory gokitjwt.ClaimsFactory) {
 
 	h.key = []byte(secret)
@@ -84,7 +84,7 @@ func (h *Handlers) AddFullGraphqlService(
 	resolver interface{},
 	logger log.Logger,
 	namespace, moduleName, secret string,
-	method *jwt.SigningMethodHMAC,
+	method jwt.SigningMethod,
 	claimsFactory gokitjwt.ClaimsFactory,
 ) {
 	h.AddGraphqlService(schema, resolver)
