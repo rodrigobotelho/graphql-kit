@@ -10,13 +10,23 @@ import (
 
 func MakeAuthenticationEndPoint(
 	end endpoint.Endpoint,
-	secret []byte,
+	key []byte,
 	method jwt.SigningMethod,
 	newClaims kitjwt.ClaimsFactory,
 ) endpoint.Endpoint {
 	auth := JwtEndpoint{
 		keyFunc: func(token *jwt.Token) (interface{}, error) {
-			return secret, nil
+			switch method.Alg() {
+			case "EdDSA":
+				return jwt.ParseEdPublicKeyFromPEM(key)
+			case "ES256", "ES384", "ES512":
+				return jwt.ParseECPublicKeyFromPEM(key)
+			case "RS256", "RS384", "RS512":
+				return jwt.ParseRSAPublicKeyFromPEM(key)
+			case "HS256", "HS384", "HS512":
+				return key, nil
+			}
+			return key, nil
 		},
 		method:    method,
 		newClaims: newClaims,
